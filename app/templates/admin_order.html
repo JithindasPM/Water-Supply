@@ -1,0 +1,100 @@
+{% extends 'admin.html' %}
+
+{% block content %}
+
+<style>
+    .table_head {
+        background: linear-gradient(to left, #00c6ff, #0072ff);
+    }
+
+    thead th {
+        color: black;
+        text-align: center;
+    }
+
+    tbody td {
+        text-align: center;
+    }
+
+    .form-control {
+        transition: all 0.3s ease-in-out;
+        border: 2px solid #ddd;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+    }
+
+    .shadow-lg {
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    .text_h{
+        color: rgba(0, 0, 0, 0.418);
+    }
+    .page_a{
+        text-decoration: none;
+        color: rgba(0, 0, 0, 0.815);
+    }
+</style>
+<h1 class="page-title text-center">All Orders</h1>
+<table>
+    <thead class="table_head">
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Order Date</th>
+            <th>Requester</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in orders %}
+        <tr>
+            <td>{{ i.product }}</td>
+            <td>{{ i.quantity }}</td>
+            <td>{{ i.total_price }}</td>
+            <td>{{ i.order_date }}</td>
+            <td>{{i.customer}}</td>
+            <td>
+                <form method="POST" action="{% url 'admin_order_update' i.id %}" class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <div class="form-group mb-0">
+                        <select name="status" class="form-select form-select-sm rounded-2 shadow-sm" required>
+                            {% for key, value in i.STATUS_CHOICES %}
+                                <option value="{{ key }}" {% if i.status == key %}selected{% endif %}>
+                                    {{ value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-2 shadow-sm">
+                        <i class="bi bi-arrow-repeat"></i> Update
+                    </button>
+                </form>
+                
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No orders yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination mt-3">
+    {% if orders.has_previous %}
+        <a class="mx-2 page_a" href="?page=1">First</a>
+        <a class="mx-2 page_a" href="?page={{ orders.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ orders.number }} of {{ orders.paginator.num_pages }}</span>
+
+    {% if orders.has_next %}
+        <a class="mx-2 page_a" href="?page={{ orders.next_page_number }}">Next</a>
+        <a class="mx-2 page_a" href="?page={{ orders.paginator.num_pages }}">Last</a>
+    {% endif %}
+</div>
+{% endblock %}

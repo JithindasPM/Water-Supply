@@ -1,0 +1,107 @@
+{% extends 'user.html' %}
+
+{% block content %}
+
+<style>
+    .table_head {
+        background: linear-gradient(to left, #00c6ff, #0072ff);
+    }
+
+    thead th {
+        color: black;
+        text-align: center;
+    }
+
+    tbody td {
+        text-align: center;
+    }
+
+    .form-control {
+        transition: all 0.3s ease-in-out;
+        border: 2px solid #ddd;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+    }
+
+    .shadow-lg {
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    .text_h{
+        color: rgba(0, 0, 0, 0.418);
+    }
+</style>
+<h1 class="page-title">My Orders</h1>
+    <div class="row">
+        <div class="col-4">
+            <form method="post" class="my-4 shadow-lg rounded bg-white p-5">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Proceed</button>
+            </form>
+        </div>
+        <div class="col-1 "></div>
+        <div class="col-6">
+            <div class="p-5 my-4">
+                <h2 class="text_h">"Quality is never an accident; it is always the result of intelligent effort." </h2>
+                <h1 class="text-end"> AquaFlow</h1>
+            </div>
+        </div>
+    </div>
+<table>
+    <thead class="table_head">
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in orders %}
+        <tr>
+            <td>{{ i.product }}</td>
+            <td>{{ i.quantity }}</td>
+            <td>{{ i.total_price }}</td>
+            <td>{{ i.order_date }}</td>
+            <td>{{ i.status }}</td>
+            <td>
+                {% if i.status == "Requested" %}
+                <a href="{% url 'order_update' i.id %}"><i class="bi bi-gear"></i></a>
+                <a class="ms-3" href="{% url 'order_delete' i.id %}"><i class="bi bi-trash3"></i></a>
+                {% else %}
+                <span class="text-muted">Not Editable</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No orders yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<div class="pagination">
+    {% if orders.has_previous %}
+    <a href="?page=1" class="btn btn-light">First</a>
+    <a href="?page={{ orders.previous_page_number }}" class="btn btn-light">Previous</a>
+    {% endif %}
+
+    <span class="btn btn-secondary">Page {{ orders.number }} of {{ orders.paginator.num_pages }}</span>
+
+    {% if orders.has_next %}
+    <a href="?page={{ orders.next_page_number }}" class="btn btn-light">Next</a>
+    <a href="?page={{ orders.paginator.num_pages }}" class="btn btn-light">Last</a>
+    {% endif %}
+</div>
+
+
+</tbody>
+</table>
+{% endblock %}

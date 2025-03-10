@@ -1,0 +1,137 @@
+
+
+{% extends 'user.html' %}
+
+{% block content %}
+
+<style>
+    .table_head {
+        background: linear-gradient(to left, #00c6ff, #0072ff);
+    }
+
+    thead th {
+        color: black;
+        text-align: center;
+    }
+
+    tbody td {
+        text-align: center;
+    }
+
+    .form-control {
+        transition: all 0.3s ease-in-out;
+        border: 2px solid #ddd;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+    }
+
+    .shadow-lg {
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    .text_h{
+        color: rgba(0, 0, 0, 0.418);
+    }
+    .page_a{
+        text-decoration: none;
+        color: rgba(0, 0, 0, 0.815);
+    }
+</style>
+<h1 class="page-title">My Orders</h1>
+    <div class="row">
+        <div class="col-4">
+            <form method="post" class="my-2 shadow-lg rounded bg-white p-3">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_product" class="form-label">Product</label>
+                    {{ form.product }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_quantity" class="form-label">Quantity</label>
+                    {{ form.quantity }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_order_date" class="form-label">Order Date</label>
+                    {{ form.order_date }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_location_url" class="form-label">Location URL</label>
+                    {{ form.location_url }}
+                </div>
+                <div class="w-100 d-flex justify-content-center">
+                    <button type="submit" class="btn btn-primary">Proceed</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-1 "></div>
+        <div class="col-6">
+            <div class="p-5 my-4">
+                <h2 class="text_h">"Quality is never an accident; it is always the result of intelligent effort." </h2>
+                <h1 class="text-end"> AquaFlow</h1>
+            </div>
+        </div>
+    </div>
+<table>
+    <thead class="table_head">
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Action</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in orders %}
+        <tr>
+            <td>{{ i.product }}</td>
+            <td>{{ i.quantity }}</td>
+            <td>{{ i.total_price }}</td>
+            <td>{{ i.order_date }}</td>
+            <td>{{ i.status }}</td>
+            <td>
+                {% if i.status == "Requested" %}
+                <a href="{% url 'quick_order_update' i.id %}"><i class="bi bi-gear"></i></a>
+                <a class="ms-3" href="{% url 'quick_order_delete' i.id %}"><i class="bi bi-trash3"></i></a>
+                {% else %}
+                <span class="text-muted">Not Editable</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if i.location_url %}
+                    <a href="{{ i.location_url }}" target="_blank" class="btn btn-primary">View Location</a>
+                {% else %}
+                    No location provided
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No orders yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {% if orders.has_previous %}
+        <a class="me-2 page_a" href="?page=1">First</a>
+        <a class="me-2 page_a" href="?page={{ orders.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ orders.number }} of {{ orders.paginator.num_pages }}</span>
+
+    {% if orders.has_next %}
+        <a class="ms-2 page_a" href="?page={{ orders.next_page_number }}">Next</a>
+        <a class="ms-2 page_a" href="?page={{ orders.paginator.num_pages }}">Last</a>
+    {% endif %}
+</div>
+
+
+</tbody>
+</table>
+{% endblock %}

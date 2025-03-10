@@ -1,0 +1,48 @@
+{% extends 'admin.html' %}
+
+{% block content %}
+
+<style>
+    .table_head{
+        background: linear-gradient(to left, #00c6ff, #0072ff);
+    }
+    thead th {
+        color: black;
+        text-align: center;
+    }
+    tbody td {
+        text-align: center;
+    }
+
+</style>
+<h1 class="page-title">Customers</h1>
+
+<table>
+    <thead class="table_head">
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phone_number</th>
+            <th>Email</th>
+            <th>Date of Join</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in customers %}
+        <tr>
+            <td>{{ i.name }}</td>
+            <td>{{ i.address }}</td>
+            <td>{{ i.phone_number }}</td>
+            <td>{{ i.email }}</td>
+            <td>{{ i.created_date }}</td>
+            
+        </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">No Customers.</td>
+            </tr>
+        {% endfor %}
+        
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,47 @@
+
+
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="main">
+<div class="login-container">
+    <h2 class="text-center mb-4">Login</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
+
+        <div class="text-center mt-4">
+            <span class="text-muted">Already have an account?</span>
+            <a href="{% url 'registration' %}" class="text-primary fw-bold ms-1 btn_a">Sign up</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        min-height: 100vh;
+    }
+    .main{
+        display: flex;justify-content: center;align-items: center;
+        margin-top: 100px;
+    }
+    .login-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+    }
+    .btn_a{
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+

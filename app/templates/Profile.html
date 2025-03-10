@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="main">
+    <div class="login-container">
+        <h2 class="text-center mb-4">Profile Updation</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary w-100 mt-3">Save</button>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        min-height: 100vh;
+    }
+    .main{
+        display: flex;justify-content: center;align-items: center;
+        margin-top: 30px;
+        margin-bottom: 30px;
+    }
+    .login-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 800px;
+    }
+
+    .btn_a {
+        text-decoration: none;
+    }
+</style>
+{% endblock %}

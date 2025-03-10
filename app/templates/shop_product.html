@@ -1,0 +1,79 @@
+{% extends 'user.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AquaFlow - About Our Products</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0f7fa;
+            color: #333;
+        }
+        .header {
+            background-color: #007acc;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .product {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #007acc;
+            color: white;
+            margin-top: 20px;
+        }
+        .header_a{
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header d-flex justify-content-between mt-2">
+        <p class="ms-4">AquaFlow - Pure & Fresh Drinking Water</p>
+        <a class="header_a" href="{% url 'user' %}"><p class="me-4">Home</p></a>
+    </div>
+
+    <div class="container">
+        <h2>About Our Products</h2>
+        <p>At AquaFlow, we provide high-quality purified drinking water in various convenient packaging options to meet your needs.</p>
+
+        {% for i in product %}
+        <div class="product">
+            <h3>{{i.size}}</h3>
+            <p>{{i.description}}</p>
+            <p><strong>Price:</strong> ₹{{i.price}}</p>
+        </div>
+        {%endfor%}
+
+        <h2>Why Choose AquaFlow?</h2>
+        <p>✔ 100% Purified & Mineral-Enriched<br>
+           ✔ Strict Quality Control & Filtration Process<br>
+           ✔ Safe, Refreshing, and Essential for a Healthy Life</p>
+
+        <h2>Stay Hydrated, Stay Healthy!</h2>
+        <p>AquaFlow ensures you get clean and refreshing drinking water every day.</p>
+    </div>
+
+    <div class="footer">© 2025 AquaFlow | Purity You Can Trust</div>
+
+</body>
+{% endblock %}
