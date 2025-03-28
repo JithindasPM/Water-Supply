@@ -40,6 +40,7 @@ from app.views import Admin_Order_View
 from app.views import Admin_Quick_Order_View
 from app.views import Admin_Order_Approval_View
 from app.views import Admin_Quick_Order_Approval_View
+from app.views import Payment_Success_View
 
 
 urlpatterns = [
@@ -67,6 +68,6 @@ urlpatterns = [
     path('admin_quick_order', Admin_Quick_Order_View.as_view(),name='admin_quick_order'),
     path('admin_order_update/<int:order_id>', Admin_Order_Approval_View.as_view(),name='admin_order_update'),
     path('admin_quick_order_update/<int:order_id>', Admin_Quick_Order_Approval_View.as_view(),name='admin_quick_order_update'),
-
+    path('payment/success/', Payment_Success_View.as_view(), name='payment_success'),
 
 ]

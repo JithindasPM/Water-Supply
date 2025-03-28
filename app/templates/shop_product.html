@@ -43,6 +43,19 @@
             text-decoration: none;
             color: white;
         }
+        .imgs1,.imgs2,.imgs3{
+            background-image: url('https://t4.ftcdn.net/jpg/01/94/60/41/360_F_194604161_9m2aPvjcXagc5hsn8fdNTaVWPoqWmACm.jpg');
+            background-position: center;
+            background-size: cover;
+            height: 200px;
+            border-radius: 3px;
+        }
+        .imgs2{
+            background-image: url('https://st3.depositphotos.com/12982378/18499/i/450/depositphotos_184997244-stock-photo-man-delivering-large-bottles-drinking.jpg');
+        }
+        .imgs3{
+            background-image: url('https://winknews.com/wp-content/uploads/2016/08/bottled-water.jpg?w=840&h=486&crop=1');
+        }
     </style>
 </head>
 <body>
@@ -55,6 +68,26 @@
     <div class="container">
         <h2>About Our Products</h2>
         <p>At AquaFlow, we provide high-quality purified drinking water in various convenient packaging options to meet your needs.</p>
+
+        <div class="container-fluid py-4">
+            <div class="row">
+                <div class="col-4">
+                    <div class="p-2 imgs1">
+    
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 imgs2">
+    
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 imgs3">
+    
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {% for i in product %}
         <div class="product">
@@ -72,6 +105,8 @@
         <h2>Stay Hydrated, Stay Healthy!</h2>
         <p>AquaFlow ensures you get clean and refreshing drinking water every day.</p>
     </div>
+
+    
 
     <div class="footer">© 2025 AquaFlow | Purity You Can Trust</div>
 

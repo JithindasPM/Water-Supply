@@ -3,6 +3,14 @@ from django.views.generic import View
 from django.contrib.auth import login,logout,authenticate
 from django.core.paginator import Paginator
 
+import razorpay
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+
 
 # Create your views here.
 
@@ -162,34 +170,170 @@ class History_View(View):
 
         return render(request, 'history.html', {'orders': orders})
 
+
+
+
+# class Order_Add_View(View):
+#     def get(self, request):
+#         form = Order_Form()
+#         orders_list = Order.objects.filter(customer=request.user).order_by('-id')
+
+#         paginator = Paginator(orders_list, 10)
+#         page_number = request.GET.get('page')
+#         orders = paginator.get_page(page_number)
+
+#         return render(request, 'order.html', {'form': form, 'orders': orders, 'razorpay_key_id': settings.RAZORPAY_KEY_ID})
+
+#     def post(self, request):
+#         form = Order_Form(request.POST)
+
+#         if form.is_valid():
+#             order = form.save(commit=False)
+#             order.customer = request.user
+#             order.save()
+
+#             # Razorpay client
+#             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+#             print("Creating Razorpay order for:", order.total_price)
+#             # Create Razorpay Order
+#             payment = client.order.create({
+#                 "amount": int(order.total_price * 100),  # Amount in paise
+#                 "currency": "INR",
+#                 "payment_capture": 1
+#             })
+#             print("Razorpay order created:", payment)
+
+#             order.razorpay_order_id = payment['id']
+#             order.save()
+
+#             return render(request, 'payment.html', {
+#                 'order': order,
+#                 'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+#                 'amount': int(order.total_price)
+#             })
+
+#         return render(request, 'order.html', {'form': form})
+
+# from django.shortcuts import redirect
+# from django.contrib import messages
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class Payment_Success_View(View):
+#     def post(self, request):
+#         data = request.POST
+#         order = get_object_or_404(Order, razorpay_order_id=data.get('razorpay_order_id'))
+
+#         # Verify signature
+#         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+#         try:
+#             client.utility.verify_payment_signature({
+#                 'razorpay_order_id': data.get('razorpay_order_id'),
+#                 'razorpay_payment_id': data.get('razorpay_payment_id'),
+#                 'razorpay_signature': data.get('razorpay_signature')
+#             })
+#             # Mark order as paid
+            
+#             print("Received Razorpay order ID:", data.get('razorpay_order_id'))
+#             print("Received Razorpay payment ID:", data.get('razorpay_payment_id'))
+#             print("Received Razorpay signature:", data.get('razorpay_signature'))
+#             order.is_paid = True
+#             order.razorpay_payment_id = data.get('razorpay_payment_id')
+#             order.razorpay_signature = data.get('razorpay_signature')
+#             order.save()
+
+#             messages.success(request, "Payment Successful!")
+#             return redirect('order_add')  # Replace with your actual URL name
+
+#         except razorpay.errors.SignatureVerificationError:
+#             messages.error(request, "Payment Failed! Please try again.")
+#             return redirect('order_add')  # Replace with your actual URL name
+
 class Order_Add_View(View):
     def get(self, request):
         form = Order_Form()
         orders_list = Order.objects.filter(customer=request.user).order_by('-id')
-        
+
         paginator = Paginator(orders_list, 10)
         page_number = request.GET.get('page')
         orders = paginator.get_page(page_number)
 
-        return render(request, 'order.html', {'form': form, 'orders': orders})
+        return render(request, 'order.html', {'form': form, 'orders': orders, 'razorpay_key_id': settings.RAZORPAY_KEY_ID})
 
     def post(self, request):
-        orders_list = Order.objects.filter(customer=request.user).order_by('-id')
         form = Order_Form(request.POST)
 
         if form.is_valid():
             order = form.save(commit=False)
-            order.customer = request.user 
+            order.customer = request.user
+
+            total_price = order.product.price * order.quantity
+
+            amount_in_paise = int(total_price * 100)
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            payment = client.order.create({
+                "amount": amount_in_paise, 
+                "currency": "INR",
+                "payment_capture": 1
+            })
+
+            order.razorpay_order_id = payment['id']
+            order.total_price = total_price  
             order.save()
-        form = Order_Form()
 
-        paginator = Paginator(orders_list, 10)
-        page_number = request.GET.get('page')
-        orders = paginator.get_page(page_number)
+            return render(request, 'payment.html', {
+                'order': order,
+                'razorpay_key_id': settings.RAZORPAY_KEY_ID,
+                'amount': total_price  
+            })
 
-        return render(request, 'order.html', {'form': form, 'orders': orders})
+        return render(request, 'order.html', {'form': form})
 
+@method_decorator(csrf_exempt, name='dispatch')
+class Payment_Success_View(View):
+    def post(self, request):
+        data = request.POST
+        razorpay_order_id = data.get('razorpay_order_id')
 
+        order_data = request.session.get('order_data')
+
+        if not order_data or razorpay_order_id != request.session.get('razorpay_order_id'):
+            messages.error(request, "Payment validation failed! Please try again.")
+            return redirect('order_add')
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': data.get('razorpay_payment_id'),
+                'razorpay_signature': data.get('razorpay_signature')
+            })
+
+            order = Order(
+                customer=request.user,
+                product=Product.objects.get(id=order_data['product_id']),
+                quantity=order_data['quantity'],
+                total_price=order_data['total_price'],
+                order_date=order_data['order_date'],
+                razorpay_order_id=razorpay_order_id,
+                razorpay_payment_id=data.get('razorpay_payment_id'),
+                razorpay_signature=data.get('razorpay_signature'),
+                is_paid=True  
+            )
+            order.save()
+
+            del request.session['order_data']
+            del request.session['razorpay_order_id']
+
+            messages.success(request, "Payment Successful! Your order has been placed.")
+            return redirect('order_add')
+
+        except razorpay.errors.SignatureVerificationError:
+            messages.error(request, "Payment verification failed! Please try again.")
+            return redirect('order_add')
+
+       
 class Order_Update_View(View):
     def get(self, request, **kwargs):
         pk=kwargs.get('pk')

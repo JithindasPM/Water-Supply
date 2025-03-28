@@ -1,0 +1,55 @@
+{% extends 'user.html' %}
+{% block content %}
+
+<head>
+    <title>Payment Page</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h2>Proceed to Payment</h2>
+
+    <button id="pay-btn">Pay Now</button>
+
+    <script>
+        console.log("Payment script running...");
+
+        const options = {
+            key: "{{ razorpay_key_id }}",
+            amount: "{{ amount }}",
+            currency: "INR",
+            name: "AquaFlow Orders",
+            description: "Test Transaction",
+            order_id: "{{ order.razorpay_order_id }}",
+            handler: function (response) {
+                console.log("Payment Success!", response);
+
+                fetch("{% url 'payment_success' %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                }).then(res => res.json())
+                  .then(data => alert(data.status))
+                  .catch(error => console.error("Payment failed:", error));
+            },
+            theme: {
+                color: "#3399cc"
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        console.log("Razorpay object created:", rzp);
+
+        document.getElementById('pay-btn').addEventListener('click', function () {
+            console.log("Pay Now button clicked");
+            rzp.open();
+        });
+    </script>
+</body>
+{% endblock %}

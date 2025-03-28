@@ -57,7 +57,11 @@ class Order(models.Model):
     quantity = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     order_date = models.DateField()
-    created_date=models.DateField(auto_now_add=True,null=True,blank=True)  
+    created_date=models.DateField(auto_now_add=True,null=True,blank=True) 
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=100, blank=True, null=True)
+    is_paid = models.BooleanField(default=False) 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
