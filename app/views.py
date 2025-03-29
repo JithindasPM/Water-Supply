@@ -98,7 +98,7 @@ class Admin_View(View):
     
 class User_View(View):
     def get(self,request,*args,**kwargs):
-        orders_list = Order.objects.filter(customer=request.user).order_by('-id')[:5]
+        orders_list = Order.objects.filter(customer=request.user).order_by('-id')[:4]
         total_orders = Order.objects.filter(customer=request.user).count()
         successful_deliveries = Order.objects.filter(customer=request.user, status="Delivered").count()
         upcoming_deliveries = Order.objects.filter(customer=request.user, status__in=["Requested", "Pending"]).count()
@@ -249,6 +249,14 @@ class History_View(View):
 #             messages.error(request, "Payment Failed! Please try again.")
 #             return redirect('order_add')  # Replace with your actual URL name
 
+from django.utils import timezone
+
+from django.views import View
+from django.shortcuts import render, redirect
+from .forms import Order_Form
+import razorpay
+from django.conf import settings
+
 class Order_Add_View(View):
     def get(self, request):
         form = Order_Form()
@@ -258,7 +266,7 @@ class Order_Add_View(View):
         page_number = request.GET.get('page')
         orders = paginator.get_page(page_number)
 
-        return render(request, 'order.html', {'form': form, 'orders': orders, 'razorpay_key_id': settings.RAZORPAY_KEY_ID})
+        return render(request, 'order.html', {'form': form, 'orders': orders})
 
     def post(self, request):
         form = Order_Form(request.POST)
@@ -267,28 +275,36 @@ class Order_Add_View(View):
             order = form.save(commit=False)
             order.customer = request.user
 
-            total_price = order.product.price * order.quantity
+            total_price = float(order.product.price * order.quantity)  # Convert Decimal to float
+            amount_in_paise = int(total_price * 100)  # Convert rupees to paise
 
-            amount_in_paise = int(total_price * 100)
-
+            # ✅ Create Razorpay order
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
             payment = client.order.create({
-                "amount": amount_in_paise, 
+                "amount": amount_in_paise,  # Paise
                 "currency": "INR",
                 "payment_capture": 1
             })
 
-            order.razorpay_order_id = payment['id']
-            order.total_price = total_price  
-            order.save()
+            # ✅ Store order in session
+            request.session['order_data'] = {
+                'product_id': order.product.id,
+                'quantity': order.quantity,
+                'total_price': total_price,
+                'order_date': str(order.order_date)  # Convert to string
+            }
+            request.session['razorpay_order_id'] = payment['id']
 
+            # ✅ Pass order ID to the template
             return render(request, 'payment.html', {
-                'order': order,
                 'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-                'amount': total_price  
+                'amount': total_price,  # In rupees
+                'order_id': payment['id']  # Pass order_id here
             })
 
         return render(request, 'order.html', {'form': form})
+
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class Payment_Success_View(View):
@@ -296,12 +312,14 @@ class Payment_Success_View(View):
         data = request.POST
         razorpay_order_id = data.get('razorpay_order_id')
 
+        # ✅ Retrieve order details from session
         order_data = request.session.get('order_data')
 
         if not order_data or razorpay_order_id != request.session.get('razorpay_order_id'):
-            messages.error(request, "Payment validation failed! Please try again.")
-            return redirect('order_add')
+            print("Order data mismatch or missing session data")  # Debug log
+            return redirect('user')  # Redirect to user page on failure
 
+        # ✅ Verify Razorpay Signature
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         try:
             client.utility.verify_payment_signature({
@@ -310,28 +328,34 @@ class Payment_Success_View(View):
                 'razorpay_signature': data.get('razorpay_signature')
             })
 
+            # ✅ Save order in database after successful payment
             order = Order(
                 customer=request.user,
                 product=Product.objects.get(id=order_data['product_id']),
                 quantity=order_data['quantity'],
                 total_price=order_data['total_price'],
-                order_date=order_data['order_date'],
+                order_date=timezone.now(),
                 razorpay_order_id=razorpay_order_id,
                 razorpay_payment_id=data.get('razorpay_payment_id'),
                 razorpay_signature=data.get('razorpay_signature'),
-                is_paid=True  
+                is_paid=True
             )
             order.save()
 
+            print("✅ Order saved successfully!")  # Debug log
+
+            # ✅ Clear session data after saving the order
             del request.session['order_data']
             del request.session['razorpay_order_id']
 
-            messages.success(request, "Payment Successful! Your order has been placed.")
-            return redirect('order_add')
-
+            return redirect('user')  # ✅ Redirect to user page after payment success
+        
         except razorpay.errors.SignatureVerificationError:
-            messages.error(request, "Payment verification failed! Please try again.")
-            return redirect('order_add')
+            print("❌ Signature verification failed!")  # Debug log
+            return redirect('user')  # Redirect on failure
+
+
+
 
        
 class Order_Update_View(View):
@@ -474,7 +498,8 @@ class Admin_Quick_Order_View(View):
         return render(request, 'admin_quick_order.html', {'orders': page_orders})
 
 
-    
-
+class User_Billing_View(View):
+    def get(self, request, *args, **kwargs):
+        return render(request,'order_bill.html')
 
 
