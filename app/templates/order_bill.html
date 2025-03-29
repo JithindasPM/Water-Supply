@@ -1,7 +1,44 @@
 {% extends 'user.html' %}
+{% load static %}
 
 {% block content %}
 
-<h1>All</h1>
+<style>
+    .main{
+        border: 1px solid black;
+        border-radius: 7px;
+    }
+    .img1{
+        height: 300px;
+        padding: 30px;
+        padding-bottom: 10px;
+        
+    }
+    .link_a{
+        text-decoration: none;
+        color: rgba(0, 0, 0, 0.418);
+    }
+</style>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-6">
+            <a class="link_a" href="{% url 'bill_order' %}">
+                <div class="main">
+                    <img class="img1 w-100" src="/media/order.jpeg" alt="">
+                <h2 class="text-center"><i>Order</i></h2>
+            </div>
+            </a>
+        </div>
+        <div class="col-6">
+            <a class="link_a" href="{% url 'bill_quick_order' %}">
+                <div class="main">
+                    <img class="img1 w-100" src="/media/quick_order.jpg" alt="">
+                <h2 class="text-center"><i>Quick Order</i></h2>
+            </div>
+            </a>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

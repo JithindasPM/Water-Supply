@@ -1,0 +1,63 @@
+<h2>Complete Your Payment</h2>
+<p>Order Amount: ₹{{ order.total_price }}</p>
+
+
+<!-- CSRF Token for Secure POST Request -->
+{% csrf_token %}
+
+<!-- Payment Button -->
+<button id="pay-now" class="btn btn-primary">Pay Now</button>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.getElementById("pay-now").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        var options = {
+            key: "{{ razorpay_key }}",
+            amount: "{{ amount|default:0 }}",  // Avoid undefined amount
+
+            currency: "INR",
+            order_id: "{{ razorpay_order_id }}",
+            name: "Quick Order Payment",
+            description: "Complete your order payment",
+            prefill: {
+                name: "{{ request.user.username }}",
+                email: "{{ request.user.email }}"
+            },
+            theme: {
+                color: "#F37254"
+            },
+            handler: function (response) {
+                // Sending payment response to the backend
+                fetch("{% url 'payment_successful' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        order_id: "{{ order.id }}",
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        alert("Payment Successful!");
+                        window.location.href = "{% url 'quick_order' %}";
+                    }
+                })
+                .catch(error => {
+                    console.error("Payment Error:", error);
+                    window.location.href = "{% url 'quick_order' %}";
+                });
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+    });
+</script>

@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 
 from app.views import Home_View
 from app.views import Registration_View
@@ -42,6 +44,10 @@ from app.views import Admin_Order_Approval_View
 from app.views import Admin_Quick_Order_Approval_View
 from app.views import Payment_Success_View
 from app.views import User_Billing_View
+from app.views import Quick_Order_View, payment_success
+from app.views import Bill_Order_View
+from app.views import Bill_Quick_Order_View
+
 
 
 urlpatterns = [
@@ -71,6 +77,12 @@ urlpatterns = [
     path('admin_quick_order_update/<int:order_id>', Admin_Quick_Order_Approval_View.as_view(),name='admin_quick_order_update'),
     path('payment/success/', Payment_Success_View.as_view(), name='payment_success'),
     path('user_billing/', User_Billing_View.as_view(), name='user_billing'),
+    path("payment-success/", payment_success, name="payment_successful"),
+    path('bill_order/', Bill_Order_View.as_view(), name='bill_order'),
+    path('bill_quick_order/', Bill_Quick_Order_View.as_view(), name='bill_quick_order'),
     
 
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

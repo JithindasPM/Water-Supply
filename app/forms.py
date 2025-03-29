@@ -125,3 +125,5 @@ class Quick_Order_Form(forms.ModelForm):
             'order_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'location_url': forms.TextInput(attrs={'id': 'location', 'class': 'form-control'}),
         }
+
+

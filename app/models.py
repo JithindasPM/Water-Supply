@@ -92,6 +92,7 @@ class Quick_Order(models.Model):
     created_date = models.DateField(auto_now_add=True, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Requested')
     location_url = models.URLField(blank=True, null=True)
+    is_paid = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.product and self.quantity:
