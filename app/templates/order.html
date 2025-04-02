@@ -104,4 +104,12 @@
 
 </tbody>
 </table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+        document.getElementById("order_date").setAttribute("min", today); // Set min attribute
+    });
+</script>
+
 {% endblock %}

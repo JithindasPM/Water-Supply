@@ -1,4 +1,4 @@
-{% extends 'user.html' %}
+{% extends 'admin.html' %}
 
 {% block content %}
 
@@ -20,47 +20,91 @@
     }
 </style>
 
+<h2 class="my-3 text_h">All Quick Orders</h2>
 
-<h2 class="my-3 text_h">Your Orders</h2>
+{% if page_obj %}
 
-{% if data %}
-<table >
+<table>
     <thead class="table_head">
         <tr>
             <th>Product</th>
+            <th>User</th>
             <th>Quantity</th>
             <th>Total Price</th>
             <th>Order Date</th>
             <th>Created Date</th>
             <th>Status</th>
+            <th>Location</th>
             <th>Paid</th>
         </tr>
     </thead>
     <tbody>
-        {% for order in data %}
+        {% for order in page_obj %}
         <tr>
             <td>{{ order.product.size }}</td>
+            <td>{{ order.customer }}</td>
             <td>{{ order.quantity }}</td>
             <td>₹{{ order.total_price }}</td>
             <td>{{ order.order_date }}</td>
             <td>{{ order.created_date }}</td>
             <td>{{ order.status }}</td>
+            <td>
+                {% if order.location_url %}
+                    <a class="btn btn-primary" href="{{ order.location_url }}" target="_blank">View Location</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
             <td>{% if order.is_paid %}✅ Paid{% else %}❌ Not Paid{% endif %}</td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="8">No orders found.</td>
+            <td colspan="9">No quick orders found.</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Pagination Controls -->
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1">« First</a>
+        <a href="?page={{ page_obj.previous_page_number }}">‹ Prev</a>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next ›</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last »</a>
+    {% endif %}
+</div>
+
+<!-- Pagination Styling -->
+<style>
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+    }
+    .pagination a {
+        text-decoration: none;
+        padding: 8px 12px;
+        margin: 0 5px;
+        border-radius: 5px;
+        background: #0072ff;
+        color: white;
+    }
+    .pagination span {
+        font-weight: bold;
+    }
+</style>
 
 {% else %}
 <div class="no-orders-container">
     <img src="https://cdn-icons-png.flaticon.com/512/4792/4792923.png" alt="No Orders" class="no-orders-img">
     <h3>No Orders Yet!</h3>
     <p>Looks like you haven't placed any orders. Start shopping now! 🛍️</p>
-    <a href="{% url 'order_add' %}" class="shop-btn">Browse Products</a>
+    <a href="{% url 'quick_order' %}" class="shop-btn">Browse Products</a>
 </div>
 
 <style>
@@ -107,6 +151,5 @@
     }
 </style>
 {% endif %}
-
 
 {% endblock %}

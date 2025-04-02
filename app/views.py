@@ -10,6 +10,7 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
+from django.db.models import Sum 
 
 
 # Create your views here.
@@ -34,20 +35,24 @@ class Home_View(View):
     
 
 class Registration_View(View):
-    def get(self,request,*args,**kwargs):
-        form=Registration_Form()
-        return render(request,'reg.html',{'form':form})
-    
-    def post(self,request,*args,**kwargs):
-        form=Registration_Form(request.POST)
+    def get(self, request, *args, **kwargs):
+        form = Registration_Form()
+        return render(request, 'reg.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = Registration_Form(request.POST)
         try:
             if form.is_valid():
-               User.objects.create_user(**form.cleaned_data)
-               form=Registration_Form()
-               return redirect('login')
+                cleaned_data = form.cleaned_data
+                cleaned_data.pop('confirm_password')  # Remove confirm_password
+
+                User.objects.create_user(**cleaned_data)  # Create user
+                return redirect('login')
         except Exception as e:
-            print(e,"===========")
-        return render(request,'reg.html',{'form':form})
+            print(e, "===========")
+        
+        return render(request, 'reg.html', {'form': form})
+
         
 class Update_UserProfile_View(View):
     def get(self, request, *args, **kwargs):
@@ -91,19 +96,54 @@ class Logout_View(View):
         logout(request)
         return redirect('home')
     
+    
+from django.db.models import Sum
+from django.utils.timezone import now
+from datetime import date
 
 class Admin_View(View):
     def get(self,request,*args,**kwargs):
-        return render(request,'admin.html')
+        
+        today = date.today()
+        current_month = today.month
+        current_year = today.year
+        
+        # Calculate total from Order model
+        order_total = Order.objects.filter(
+            is_paid=True, 
+            order_date__year=current_year, 
+            order_date__month=current_month
+        ).aggregate(Sum('total_price'))['total_price__sum'] or 0
+
+        # Calculate total from Quick_Order model
+        quick_order_total = Quick_Order.objects.filter(
+            is_paid=True, 
+            order_date__year=current_year, 
+            order_date__month=current_month
+        ).aggregate(Sum('total_price'))['total_price__sum'] or 0
+
+        # Total amount from both models
+        total_amount = order_total + quick_order_total
+
     
+        data = Order.objects.all().order_by('-id')[:3]
+        all_orders=Order.objects.all().count()
+        all_quick=Quick_Order.objects.all().count()
+        user_count = User.objects.filter(is_superuser=False).count()
+        return render(request,'admin.html',{'data':data,'all_orders':all_orders,'all_quick':all_quick,
+                                            'user_count':user_count,'total_amount':total_amount})
+  
+
 class User_View(View):
     def get(self,request,*args,**kwargs):
         orders_list = Order.objects.filter(customer=request.user).order_by('-id')[:4]
         total_orders = Order.objects.filter(customer=request.user).count()
         successful_deliveries = Order.objects.filter(customer=request.user, status="Delivered").count()
         upcoming_deliveries = Order.objects.filter(customer=request.user, status__in=["Requested", "Pending"]).count()
+        total_spent = Order.objects.filter(customer=request.user, is_paid=True).aggregate(total_amount=Sum('total_price'))['total_amount'] or 0
         return render(request,'user.html',{'orders_list':orders_list,'successful_deliveries':successful_deliveries,
-                                           'total_orders':total_orders,'upcoming_deliveries':upcoming_deliveries})
+                                           'total_orders':total_orders,'upcoming_deliveries':upcoming_deliveries,
+                                           'total_spent':total_spent})
     
 
 # Products -----------------------------------
@@ -493,3 +533,127 @@ class Bill_Quick_Order_View(View):
     def get(self, request, *args, **kwargs):
         data=Quick_Order.objects.filter(customer=request.user)
         return render(request,'bill_quick_order.html',{'data':data})
+    
+class All_Payments_View(View):
+    def get(self,request):
+        return render(request,'all_payments.html')
+
+class All_Order_Payment_View(View):
+    def get(self, request, *args, **kwargs):
+        data = Order.objects.all().order_by('-id')
+
+        # Pagination (5 orders per page)
+        paginator = Paginator(data, 5)  
+        page_number = request.GET.get('page')  
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, 'all_order_payments.html', {'page_obj': page_obj})
+
+    
+class All_Quick_Payments_View(View):
+    def get(self, request, *args, **kwargs):
+        data = Quick_Order.objects.all().order_by('-id')
+
+        # Pagination (5 orders per page)
+        paginator = Paginator(data, 5)  
+        page_number = request.GET.get('page')  
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, 'all_quick_payments.html', {'page_obj': page_obj})
+    
+    
+import random
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.core.cache import cache  # To store OTP temporarily
+from .forms import ForgotPasswordForm,OTPVerificationForm,ResetPasswordForm
+
+from .models import UserProfile_Model
+
+def send_otp_email(username):
+    try:
+        user = User.objects.get(username=username)  # Fetch User object
+        user_profile = UserProfile_Model.objects.get(user=user)  # Fetch associated profile
+        
+        if not user_profile.email:  # Ensure the user has an email
+            return False  
+
+        otp = random.randint(100000, 999999)  # Generate a 6-digit OTP
+        cache.set(f"otp_{username}", otp, timeout=300)  # Store OTP for 5 minutes
+
+        subject = "Password Reset OTP"
+        message = f"Hello {username},\n\nYour OTP for password reset is: {otp}\n\nThis OTP is valid for 5 minutes."
+        send_mail(subject, message, "your_email@example.com", [user_profile.email])  # Fetch email from UserProfile_Model
+        return True  
+
+    except User.DoesNotExist:
+        return False
+    except UserProfile_Model.DoesNotExist:
+        return False
+
+
+def forgot_password(request):
+    if request.method == "POST":
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            email_sent = send_otp_email(username)
+
+            if email_sent:
+                request.session["reset_username"] = username  # Store username for next step
+                return redirect("verify_otp")  # Redirect to OTP verification page
+            else:
+                messages.error(request, "No valid email associated with this account.")
+    else:
+        form = ForgotPasswordForm()
+    
+    return render(request, "forgot_password.html", {"form": form})
+
+
+
+def verify_otp(request):
+    if "reset_username" not in request.session:
+        return redirect("forgot_password")  # Redirect if username is missing
+
+    username = request.session["reset_username"]
+    
+    if request.method == "POST":
+        form = OTPVerificationForm(request.POST)
+        if form.is_valid():
+            user_otp = form.cleaned_data["otp"]
+            stored_otp = cache.get(f"otp_{username}")
+
+            if stored_otp and str(stored_otp) == user_otp:
+                cache.delete(f"otp_{username}")  # OTP used, remove it
+                return redirect("reset_password")  # Redirect to reset password
+            else:
+                messages.error(request, "Invalid OTP or expired OTP!")
+    else:
+        form = OTPVerificationForm()
+    
+    return render(request, "verify_otp.html", {"form": form})
+
+from django.contrib.auth.hashers import make_password
+
+def reset_password(request):
+    if "reset_username" not in request.session:
+        return redirect("forgot_password")  # Redirect if session expired
+
+    username = request.session["reset_username"]
+    user = User.objects.get(username=username)
+
+    if request.method == "POST":
+        form = ResetPasswordForm(request.POST)
+        if form.is_valid():
+            user.password = make_password(form.cleaned_data["new_password"])  # Hash the password
+            user.save()
+            del request.session["reset_username"]  # Remove session data
+            messages.success(request, "Password reset successfully! You can now log in.")
+            return redirect("login")  # Redirect to login page
+    else:
+        form = ResetPasswordForm()
+    
+    return render(request, "reset_password.html", {"form": form})

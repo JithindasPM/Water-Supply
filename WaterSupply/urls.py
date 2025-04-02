@@ -47,7 +47,10 @@ from app.views import User_Billing_View
 from app.views import Quick_Order_View, payment_success
 from app.views import Bill_Order_View
 from app.views import Bill_Quick_Order_View
-
+from app.views import All_Payments_View
+from app.views import All_Order_Payment_View
+from app.views import All_Quick_Payments_View
+from app.views import forgot_password, verify_otp, reset_password
 
 
 urlpatterns = [
@@ -80,7 +83,14 @@ urlpatterns = [
     path("payment-success/", payment_success, name="payment_successful"),
     path('bill_order/', Bill_Order_View.as_view(), name='bill_order'),
     path('bill_quick_order/', Bill_Quick_Order_View.as_view(), name='bill_quick_order'),
+    path('all_payments/', All_Payments_View.as_view(), name='all_payments'),
+    path('all_order_payment/', All_Order_Payment_View.as_view(), name='all_order_payment'),
+    path('all_quick_payment/', All_Quick_Payments_View.as_view(), name='all_quick_payment'),
+
     
+    path("forgot-password/", forgot_password, name="forgot_password"),
+    path("verify-otp/", verify_otp, name="verify_otp"),
+    path("reset-password/", reset_password, name="reset_password"),
 
 ]
 

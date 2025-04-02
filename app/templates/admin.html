@@ -166,36 +166,6 @@
             cursor: pointer;
         }
         
-        .search-container {
-            flex: 1;
-            max-width: 400px;
-            margin: 0 2rem;
-            position: relative;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 0.6rem 1rem 0.6rem 2.5rem;
-            border: 1px solid var(--gray-medium);
-            border-radius: 30px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.2);
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #aaa;
-        }
-        
         .header-right {
             display: flex;
             align-items: center;
@@ -505,14 +475,21 @@
             padding: 1.5rem;
         }
         
-        .chart-placeholder {
+        .chart-placeholder1,.chart-placeholder2 {
             height: 250px;
-            background-color: #f8f9fa;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #aaa;
+            background-size: cover;
+            background-position: center;
+        }
+        .chart-placeholder1{
+            background-image: url('https://go.deckcommerce.com/hubfs/iStock-1204099658.jpg');
+        }
+        .chart-placeholder2{
+            background-image: url('https://media.istockphoto.com/id/1022887882/photo/manager-technician-industrial-engineer-working-and-control-robotics-with-monitoring-system.jpg?s=612x612&w=0&k=20&c=VRiCwWRZwFLf89aim1qCCh_pBbnd_Up1tynjwoG8LLM=');
         }
         
         /* Responsive */
@@ -592,12 +569,6 @@
                     Customers
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <span class="menu-icon"><i class="fas fa-truck"></i></span>
-                    Deliveries
-                </a>
-            </li>
             
             <div class="divider"></div>
             
@@ -608,7 +579,7 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="" class="menu-link">
+                <a href="{% url 'all_payments' %}" class="menu-link">
                     <span class="menu-icon"><i class="fas fa-coins"></i></span>
                     Billing
                 </a>
@@ -667,7 +638,7 @@
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <div class="stat-detail">
-                        <div class="stat-value">256</div>
+                        <div class="stat-value">{{all_orders}}</div>
                         <div class="stat-label">Total Orders</div>
                     </div>
                 </div>
@@ -677,8 +648,8 @@
                         <i class="fas fa-truck"></i>
                     </div>
                     <div class="stat-detail">
-                        <div class="stat-value">189</div>
-                        <div class="stat-label">Completed Deliveries</div>
+                        <div class="stat-value">{{all_quick}}</div>
+                        <div class="stat-label">Total quick Orders</div>
                     </div>
                 </div>
                 
@@ -687,7 +658,7 @@
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="stat-detail">
-                        <div class="stat-value">124</div>
+                        <div class="stat-value">{{user_count}}</div>
                         <div class="stat-label">Active Customers</div>
                     </div>
                 </div>
@@ -697,7 +668,7 @@
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                     <div class="stat-detail">
-                        <div class="stat-value">$15,280</div>
+                        <div class="stat-value">{{total_amount}}</div>
                         <div class="stat-label">Revenue This Month</div>
                     </div>
                 </div>
@@ -707,42 +678,42 @@
             <div class="chart-grid">
                 <div class="card chart-card">
                     <div class="section-header">
-                        <h2 class="section-title">Revenue Overview</h2>
+                        <h2 class="section-title">Order Overview</h2>
                         <div class="section-actions">
-                            <button class="btn btn-secondary btn-sm">Weekly</button>
-                            <button class="btn btn-primary btn-sm">Monthly</button>
+                            <a class="btn btn-primary btn-sm" href="{% url 'all_order_payment' %}">View</a>
                         </div>
                     </div>
-                    <div class="chart-placeholder">
-                        <i class="fas fa-chart-line fa-3x"></i>
+                    <div class="chart-placeholder1">
                     </div>
                 </div>
                 
                 <div class="card chart-card">
                     <div class="section-header">
-                        <h2 class="section-title">Order Statistics</h2>
+                        <h2 class="section-title">Quick Order Overview</h2>
                         <div class="section-actions">
-                            <button class="btn btn-secondary btn-sm">Export</button>
+                            <a class="btn btn-primary btn-sm" href="{% url 'all_quick_payment' %}">View</a>
                         </div>
                     </div>
-                    <div class="chart-placeholder">
-                        <i class="fas fa-chart-pie fa-3x"></i>
+                    <div class="chart-placeholder2">
                     </div>
                 </div>
             </div>
             
-            <!-- Map Section -->
             <div class="card">
                 <div class="section-header">
                     <h2 class="section-title">Delivery Tracking</h2>
-                    <div class="section-actions">
-                        <button class="btn btn-primary btn-sm">View Full Map</button>
-                    </div>
                 </div>
                 <div class="map-container">
-                    <div class="chart-placeholder" style="height: 100%;">
-                        <i class="fas fa-map-marked-alt fa-3x"></i>
-                    </div>
+                    <iframe 
+                        id="googleMap"
+                        width="100%" 
+                        height="100%" 
+                        style="border:0; border-radius: 8px;" 
+                        allowfullscreen 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3927.5449247341165!2d76.35762447405662!3d10.015890972837682!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b080d3881a8d21f%3A0xdee0b9c31b8fd58b!2sLuminar%20Technolab%20Pvt%20Ltd!5e0!3m2!1sen!2sin!4v1712049312345"
+                    ></iframe>
                 </div>
             </div>
             
@@ -759,7 +730,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Order ID</th>
+                                <th>Product</th>
                                 <th>Customer</th>
                                 <th>Date</th>
                                 <th>Amount</th>
@@ -768,21 +739,24 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for order in data %}
                             <tr>
-                                <td>#ORD-2025-001</td>
+                                <td>{{ order.product.size }}</td>
                                 <td>
-                                    <div class="avatar-sm">
-                                        <img src="/api/placeholder/35/35" alt="John Doe">
-                                    </div>
-                                    <span>John Doe</span>
+                                    {{ order.customer }}
                                 </td>
-                                <td>Mar 01, 2025</td>
-                                <td>$120.00</td>
-                                <td><span class="status status-delivered">Delivered</span></td>
+                                <td>{{ order.order_date }}</td>
+                                <td>₹{{ order.total_price }}</td>
+                                <td>{{ order.status }}</td>
                                 <td>
-                                    <button class="btn btn-primary btn-sm">View</button>
+                                    {% if order.is_paid %}✅ Paid{% else %}❌ Not Paid{% endif %}
                                 </td>
                             </tr>
+                            {% empty %}
+        <tr>
+            <td colspan="8">No orders found.</td>
+        </tr>
+        {% endfor %}
                         </tbody>
                     </table>
                 </div>

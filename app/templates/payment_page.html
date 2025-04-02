@@ -1,22 +1,93 @@
-<h2>Complete Your Payment</h2>
-<p>Order Amount: ₹{{ order.total_price }}</p>
+{% extends 'user.html' %}
 
+{% block content %}
+<style>
+    .payment-container {
+        max-width: 450px;
+        margin: auto;
+        padding: 30px;
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        color: white;
+        margin-top: 100px;
+    }
 
-<!-- CSRF Token for Secure POST Request -->
-{% csrf_token %}
+    .payment-container h2 {
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
 
-<!-- Payment Button -->
-<button id="pay-now" class="btn btn-primary">Pay Now</button>
+    .payment-amount {
+        font-size: 24px;
+        font-weight: bold;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 10px;
+        border-radius: 5px;
+        display: inline-block;
+    }
 
+    .btn-pay {
+        background-color: #ff5722;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: 0.3s;
+        margin-top: 15px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-pay:hover {
+        background-color: #e64a19;
+    }
+
+    .btn-pay i {
+        margin-left: 8px;
+    }
+
+    .loading-spinner {
+        display: none;
+        margin-top: 15px;
+    }
+</style>
+
+<!-- Payment Card -->
+<div class="payment-container">
+    <h2><i class="fas fa-shopping-cart"></i> Complete Your Payment</h2>
+    <p>Order Amount:</p>
+    <p class="payment-amount">₹{{ order.total_price }}</p>
+
+    <!-- CSRF Token -->
+    {% csrf_token %}
+<br>
+    <!-- Payment Button -->
+    <button id="pay-now" class="btn btn-pay">
+        Pay Now <i class="fas fa-credit-card"></i>
+    </button>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+        <img src="https://i.gifer.com/4V0b.gif" width="40px" alt="Loading...">
+        <p>Processing Payment...</p>
+    </div>
+</div>
+
+<!-- Razorpay Integration -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     document.getElementById("pay-now").addEventListener("click", function (e) {
         e.preventDefault();
+        
+        // Show Loading Spinner
+        document.querySelector(".loading-spinner").style.display = "block";
 
         var options = {
             key: "{{ razorpay_key }}",
-            amount: "{{ amount|default:0 }}",  // Avoid undefined amount
-
+            amount: "{{ amount|default:0 }}",  
             currency: "INR",
             order_id: "{{ razorpay_order_id }}",
             name: "Quick Order Payment",
@@ -29,7 +100,10 @@
                 color: "#F37254"
             },
             handler: function (response) {
-                // Sending payment response to the backend
+                // Hide Spinner
+                document.querySelector(".loading-spinner").style.display = "none";
+
+                // Send payment response to backend
                 fetch("{% url 'payment_successful' %}", {
                     method: "POST",
                     headers: {
@@ -46,12 +120,13 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === "success") {
-                        alert("Payment Successful!");
+                        alert("✅ Payment Successful!");
                         window.location.href = "{% url 'quick_order' %}";
                     }
                 })
                 .catch(error => {
                     console.error("Payment Error:", error);
+                    alert("❌ Payment Failed! Please try again.");
                     window.location.href = "{% url 'quick_order' %}";
                 });
             }
@@ -61,3 +136,5 @@
         rzp.open();
     });
 </script>
+
+{% endblock %}
